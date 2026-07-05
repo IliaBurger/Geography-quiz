@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Угадай Достопримечательность</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 420px;
+            width: 100%;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            min-height: 520px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- АНИМАЦИИ --- */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .slide-in {
+            animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .shake {
+            animation: shake 0.4s ease;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* --- ШАПКА --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-weight: 600;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .category-badge {
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score {
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .question-counter {
+            color: var(--tg-theme-hint-color, #999999);
+            font-size: 14px;
+        }
+
+        .record-badge {
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .record-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- ТАЙМЕР --- */
+        .timer-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin: 6px 0 12px 0;
+        }
+
+        .timer-circle {
+            position: relative;
+            width: 56px;
+            height: 56px;
+        }
+
+        .timer-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .timer-circle .bg {
+            fill: none;
+            stroke: var(--tg-theme-hint-color, #e0e0e0);
+            stroke-width: 4;
+        }
+
+        .timer-circle .progress {
+            fill: none;
+            stroke: #4caf50;
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+        }
+
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .timer-text.warning {
+            color: #f44336;
+            animation: pulse 0.5s infinite;
+        }
+
+        /* Бонусный индикатор */
+        .bonus-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            padding: 4px 14px;
+            border-radius: 30px;
+            color: #000;
+            font-weight: 700;
+            animation: glow 2s infinite;
+        }
+
+        .bonus-indicator .emoji {
+            font-size: 18px;
+        }
+
+        /* --- ИЗОБРАЖЕНИЕ --- */
+        .image-wrapper {
+            width: 100%;
+            height: 200px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 2px solid var(--tg-theme-hint-color, #e0e0e0);
+            position: relative;
+        }
+
+        #question-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 14px;
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+        }
+
+        /* --- КНОПКИ ОТВЕТОВ --- */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .option-btn {
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            border: 2px solid var(--tg-theme-hint-color, #cccccc);
+            padding: 14px 8px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            position: relative;
+            overflow: hidden;
+            min-height: 52px;
+            word-break: break-word;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .option-btn.correct {
+            background: #4caf50;
+            border-color: #4caf50;
+            color: white;
+            animation: pulse 0.3s ease;
+        }
+
+        .option-btn.wrong {
+            background: #f44336;
+            border-color: #f44336;
+            color: white;
+            animation: shake 0.4s ease;
+        }
+
+        .option-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .option-btn .letter {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            border-radius: 50%;
+            background: var(--tg-theme-hint-color, #ddd);
+            color: var(--tg-theme-text-color, #000);
+            font-size: 12px;
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .option-btn.correct .letter,
+        .option-btn.wrong .letter {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        /* --- КНОПКИ --- */
+        .next-btn {
+            width: 100%;
+            background: var(--tg-theme-button-color, #0088cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .next-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .next-btn:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+
+        .next-btn.secondary {
+            background: var(--tg-theme-hint-color, #999);
+        }
+
+        .next-btn.share-btn {
+            background: #0088cc;
+        }
+
+        .next-btn.gold {
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            color: #000;
+        }
+
+        .next-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* --- ЭКРАН ВЫБОРА КАТЕГОРИИ --- */
+        .category-screen {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .category-screen h2 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .category-screen .subtitle {
+            color: var(--tg-theme-hint-color, #666);
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .category-btn {
+            background: var(--tg-theme-bg-color, #ffffff);
+            border: 2px solid var(--tg-theme-hint-color, #cccccc);
+            border-radius: 16px;
+            padding: 16px 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--tg-theme-text-color, #000000);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+        }
+
+        .category-btn:active {
+            transform: scale(0.95);
+        }
+
+        .category-btn .emoji {
+            font-size: 28px;
+        }
+
+        .category-btn .count {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--tg-theme-hint-color, #666);
+        }
+
+        .category-btn .best-score {
+            font-size: 10px;
+            color: #ffd700;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .category-btn.has-record {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        /* --- РЕКОРДЫ (попап) --- */
+        .records-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .records-overlay.active {
+            display: flex;
+        }
+
+        .records-modal {
+            background: var(--tg-theme-secondary-bg-color, #ffffff);
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 380px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .records-modal h2 {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 22px;
+        }
+
+        .records-modal .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--tg-theme-text-color, #000);
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .records-modal .close-btn:hover {
+            opacity: 1;
+        }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--tg-theme-bg-color, #f8f8f8);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .record-item .cat-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .record-item .cat-score {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #666);
+        }
+
+        .record-item .cat-score strong {
+            color: #ffd700;
+            font-size: 16px;
+        }
+
+        .no-records {
+            text-align: center;
+            color: var(--tg-theme-hint-color, #666);
+            padding: 20px 0;
+            font-size: 14px;
+        }
+
+        /* --- ЭКРАН ФИНИША --- */
+        .finish-screen {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .finish-screen .big-emoji {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .finish-screen h2 {
+            font-size: 26px;
+            margin-bottom: 4px;
+        }
+
+        .finish-screen .subtitle {
+            color: var(--tg-theme-hint-color, #666);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .finish-screen .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .finish-screen .stat-item {
+            background: var(--tg-theme-bg-color, #ffffff);
+            padding: 12px 6px;
+            border-radius: 12px;
+            border: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+        }
+
+        .finish-screen .stat-item .number {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color, #0088cc);
+        }
+
+        .finish-screen .stat-item .number.gold {
+            color: #ffd700;
+        }
+
+        .finish-screen .stat-item .label {
+            font-size: 11px;
+            color: var(--tg-theme-hint-color, #666);
+            margin-top: 2px;
+        }
+
+        .new-record {
+            background: linear-gradient(135deg, #ffd700, #ffb300);
+            color: #000;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-block;
+            animation: glow 1s infinite;
+            margin-bottom: 12px;
+        }
+
+        /* --- Утилиты --- */
+        .hide {
+            display: none !important;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        .gap-8 {
+            gap: 8px;
+        }
+
+        @media (max-width: 420px) {
+            .container {
+                padding: 14px;
+                border-radius: 20px;
+            }
+            .option-btn {
+                font-size: 13px;
+                padding: 12px 6px;
+                min-height: 44px;
+            }
+            .image-wrapper {
+                height: 160px;
+            }
+            .timer-circle {
+                width: 46px;
+                height: 46px;
+            }
+            .timer-text {
+                font-size: 16px;
+            }
+            .category-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .category-btn {
+                padding: 12px 6px;
+                font-size: 13px;
+            }
+            .category-btn .emoji {
+                font-size: 22px;
+            }
+            .finish-screen .stats {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+            .bonus-indicator {
+                font-size: 11px;
+                padding: 2px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ОВЕРЛЕЙ РЕКОРДОВ -->
+<div class="records-overlay" id="records-overlay">
+    <div class="records-modal">
+        <button class="close-btn" id="close-records">✕</button>
+        <h2>🏅 Рекорды</h2>
+        <div id="records-list">
+            <!-- JS заполнит -->
+        </div>
+        <div style="margin-top: 16px; text-align: center; font-size: 12px; color: var(--tg-theme-hint-color, #666);">
+            💾 Данные сохраняются локально
+        </div>
+    </div>
+</div>
+
+<div class="container" id="app">
+    <!-- ШАПКА -->
+    <div class="header" id="header">
+        <div class="header-left">
+            <span class="category-badge" id="category-badge">🌍 Все</span>
+            <span class="question-counter" id="progress-text">1 / 10</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="score" id="score-text">⭐ 0</span>
+            <span class="record-badge" id="records-btn">🏅</span>
+        </div>
+    </div>
+
+    <!-- ЭКРАН ВЫБОРА КАТЕГОРИИ -->
+    <div id="category-screen" class="category-screen slide-in">
+        <h2>🗺️ Выбери категорию</h2>
+        <p class="subtitle">Угадай достопримечательности мира!</p>
+        <div id="daily-bonus" class="bonus-indicator hide" style="justify-content: center; margin-bottom: 12px;">
+            <span class="emoji">🎁</span>
+            <span>Бонус +1 вопрос</span>
+        </div>
+        <div class="category-grid" id="category-grid">
+            <!-- JS заполнит -->
+        </div>
+    </div>
+
+    <!-- ЭКРАН ИГРЫ -->
+    <div id="game-screen" class="hide">
+        <!-- Таймер -->
+        <div class="timer-wrapper">
+            <div class="timer-circle">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                    <circle class="bg" cx="28" cy="28" r="24"/>
+                    <circle class="progress" id="timer-progress" cx="28" cy="28" r="24"
+                            stroke-dasharray="150.8" stroke-dashoffset="0"/>
+                </svg>
+                <div class="timer-text" id="timer-text">10</div>
+            </div>
+            <div id="streak-indicator" class="bonus-indicator" style="display: none;">
+                <span class="emoji">🔥</span>
+                <span id="streak-text">0</span>
+            </div>
+        </div>
+
+        <!-- Изображение -->
+        <div class="image-wrapper">
+            <img id="question-image" src="" alt="Достопримечательность" style="display:none;">
+            <div class="image-placeholder" id="image-placeholder">🖼️ Загрузка...</div>
+        </div>
+
+        <!-- Варианты -->
+        <div class="options-grid" id="options-container"></div>
+
+        <!-- Кнопка далее -->
+        <button class="next-btn" id="next-btn" disabled>Дальше ➜</button>
+    </div>
+
+    <!-- ЭКРАН ФИНИША -->
+    <div id="finish-screen" class="finish-screen hide">
+        <span class="big-emoji" id="finish-emoji">🏆</span>
+        <h2 id="finish-title">Отлично!</h2>
+        <p class="subtitle" id="finish-subtitle">Ты справился!</p>
+        <div id="new-record-badge" class="new-record hide">🎉 НОВЫЙ РЕКОРД!</div>
+        <div class="stats">
+            <div class="stat-item">
+                <div class="number" id="final-score">0</div>
+                <div class="label">✅ Правильно</div>
+            </div>
+            <div class="stat-item">
+                <div class="number" id="final-total">0</div>
+                <div class="label">📝 Всего</div>
+            </div>
+            <div class="stat-item">
+                <div class="number gold" id="final-percent">0%</div>
+                <div class="label">🎯 Точность</div>
+            </div>
+        </div>
+        <div class="next-btn-group">
+            <button class="next-btn" id="restart-btn">🔄 Играть снова</button>
+            <button class="next-btn share-btn" id="share-btn">📤 Поделиться</button>
+            <button class="next-btn secondary" id="menu-btn">📋 Меню категорий</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // --- ИНИЦИАЛИЗАЦИЯ TELEGRAM ---
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.setBackgroundColor('var(--tg-theme-bg-color)');
+        tg.setHeaderColor('var(--tg-theme-secondary-bg-color)');
+
+        // --- ЗВУКИ через Web Audio API ---
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    this.enabled = false;
+                }
+            }
+
+            playTone(freq, duration, type = 'sine', volume = 0.3) {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) { /* тихо падаем */ }
+            }
+
+            correct() {
+                this.playTone(523, 0.12, 'sine', 0.25);
+                setTimeout(() => this.playTone(659, 0.12, 'sine', 0.25), 100);
+                setTimeout(() => this.playTone(784, 0.2, 'sine', 0.3), 200);
+            }
+
+            wrong() {
+                this.playTone(300, 0.3, 'sawtooth', 0.2);
+                setTimeout(() => this.playTone(250, 0.3, 'sawtooth', 0.15), 150);
+            }
+
+            tick() {
+                this.playTone(800, 0.05, 'sine', 0.1);
+            }
+
+            streak() {
+                this.playTone(987, 0.1, 'sine', 0.15);
+                setTimeout(() => this.playTone(1318, 0.1, 'sine', 0.15), 80);
+                setTimeout(() => this.playTone(1568, 0.15, 'sine', 0.2), 160);
+            }
+
+            gameOver(score, total) {
+                if (score / total >= 0.7) {
+                    [523, 587, 659, 784, 880].forEach((f, i) => {
+                        setTimeout(() => this.playTone(f, 0.15, 'sine', 0.2), i * 100);
+                    });
+                }
+            }
+
+            record() {
+                [523, 659, 784, 1047].forEach((f, i) => {
+                    setTimeout(() => this.playTone(f, 0.2, 'sine', 0.25), i * 120);
+                });
+            }
+
+            bonus() {
+                this.playTone(1047, 0.15, 'sine', 0.2);
+                setTimeout(() => this.playTone(1318, 0.15, 'sine', 0.2), 100);
+                setTimeout(() => this.playTone(1568, 0.2, 'sine', 0.25), 200);
+            }
+
+            resume() {
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+        }
+
+        const sound = new SoundFX();
+
+        // --- БАЗА ДАННЫХ ВОПРОСОВ (расширенная) ---
+        const questionsDB = [
+            // Европа
+            { category: 'europe', name: 'Рейхстаг', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Berlin_Reichstag_%28cropped%29.jpg/800px-Berlin_Reichstag_%28cropped%29.jpg', options: ['Берлин', 'Мюнхен', 'Гамбург', 'Кёльн'], correct: 0 },
+            { category: 'europe', name: 'Эйфелева башня', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/800px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg', options: ['Париж', 'Лион', 'Марсель', 'Ницца'], correct: 0 },
+            { category: 'europe', name: 'Колизей', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Colosseum_in_Rome%2C_Italy_-_April_2007_%28cropped%29.jpg/800px-Colosseum_in_Rome%2C_Italy_-_April_2007_%28cropped%29.jpg', options: ['Рим', 'Милан', 'Неаполь', 'Флоренция'], correct: 0 },
+            { category: 'europe', name: 'Биг Бен', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Big_Ben%2C_London_%28cropped%29.jpg/800px-Big_Ben%2C_London_%28cropped%29.jpg', options: ['Лондон', 'Париж', 'Рим', 'Мадрид'], correct: 0 },
+            { category: 'europe', name: 'Пизанская башня', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Leaning_Tower_of_Pisa_%28cropped%29.jpg/800px-Leaning_Tower_of_Pisa_%28cropped%29.jpg', options: ['Пиза', 'Флоренция', 'Венеция', 'Неаполь'], correct: 0 },
+            { category: 'europe', name: 'Стоунхендж', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Stonehenge_%28cropped%29.jpg/800px-Stonehenge_%28cropped%29.jpg', options: ['Англия', 'Шотландия', 'Уэльс', 'Ирландия'], correct: 0 },
+            
+            // Азия
+            { category: 'asia', name: 'Тадж-Махал', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Taj_Mahal_%28Edited%29.jpg/800px-Taj_Mahal_%28Edited%29.jpg', options: ['Агра', 'Дели', 'Мумбаи', 'Джайпур'], correct: 0 },
+            { category: 'asia', name: 'Великая Китайская стена', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg/800px-The_Great_Wall_of_China_at_Jinshanling-edit.jpg', options: ['Пекин', 'Шанхай', 'Гонконг', 'Токио'], correct: 0 },
+            { category: 'asia', name: 'Бурдж-Халифа', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Burj_Khalifa_%28cropped%29.jpg/800px-Burj_Khalifa_%28cropped%29.jpg', options: ['Дубай', 'Абу-Даби', 'Доха', 'Эр-Рияд'], correct: 0 },
+            { category: 'asia', name: 'Ангкор-Ват', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Angkor_Wat_%28cropped%29.jpg/800px-Angkor_Wat_%28cropped%29.jpg', options: ['Камбоджа', 'Таиланд', 'Вьетнам', 'Лаос'], correct: 0 },
+            { category: 'asia', name: 'Петра', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Petra_%28cropped%29.jpg/800px-Petra_%28cropped%29.jpg', options: ['Иордания', 'Египет', 'Саудовская Аравия', 'Израиль'], correct: 0 },
+            { category: 'asia', name: 'Золотой храм', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Golden_Temple_%28cropped%29.jpg/800px-Golden_Temple_%28cropped%29.jpg', options: ['Индия', 'Непал', 'Таиланд', 'Мьянма'], correct: 0 },
+            
+            // Америка
+            { category: 'america', name: 'Статуя Свободы', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Statue_of_Liberty_7.jpg/800px-Statue_of_Liberty_7.jpg', options: ['Нью-Йорк', 'Вашингтон', 'Бостон', 'Чикаго'], correct: 0 },
+            { category: 'america', name: 'Мачу-Пикчу', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Machu_Picchu%2C_Peru_%28cropped%29.jpg/800px-Machu_Picchu%2C_Peru_%28cropped%29.jpg', options: ['Перу', 'Чили', 'Бразилия', 'Аргентина'], correct: 0 },
+            { category: 'america', name: 'Белый дом', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/White_House_%28cropped%29.jpg/800px-White_House_%28cropped%29.jpg', options: ['Вашингтон', 'Нью-Йорк', 'Бостон', 'Филадельфия'], correct: 0 },
+            { category: 'america', name: 'Кристаллы Найка', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Cave_of_the_Crystals_%28cropped%29.jpg/800px-Cave_of_the_Crystals_%28cropped%29.jpg', options: ['Мексика', 'США', 'Канада', 'Бразилия'], correct: 0 },
+            
+            // Африка
+            { category: 'africa', name: 'Пирамиды Гизы', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/800px-Kheops-Pyramid.jpg', options: ['Египет', 'Судан', 'Ливия', 'Тунис'], correct: 0 },
+            { category: 'africa', name: 'Сфинкс', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Great_Sphinx_of_Giza_%28cropped%29.jpg/800px-Great_Sphinx_of_Giza_%28cropped%29.jpg', options: ['Египет', 'Греция', 'Турция', 'Иордания'], correct: 0 },
+            { category: 'africa', name: 'Килиманджаро', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Kilimanjaro_%28cropped%29.jpg/800px-Kilimanjaro_%28cropped%29.jpg', options: ['Танзания', 'Кения', 'Уганда', 'Эфиопия'], correct: 0 },
+            { category: 'africa', name: 'Виктория (водопад)', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Victoria_Falls_%28cropped%29.jpg/800px-Victoria_Falls_%28cropped%29.jpg', options: ['Замбия', 'ЮАР', 'Ботсвана', 'Мозамбик'], correct: 0 },
+            
+            // Австралия и Океания
+            { category: 'australia', name: 'Оперный театр Сиднея', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sydney_Opera_House_%28cropped%29.jpg/800px-Sydney_Opera_House_%28cropped%29.jpg', options: ['Сидней', 'Мельбурн', 'Брисбен', 'Перт'], correct: 0 },
+            { category: 'australia', name: 'Айерс-Рок (Улуру)', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Uluru_%28cropped%29.jpg/800px-Uluru_%28cropped%29.jpg', options: ['Австралия', 'Новая Зеландия', 'Индонезия', 'Папуа'], correct: 0 },
+            { category: 'australia', name: 'Большой Барьерный риф', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Great_Barrier_Reef_%28cropped%29.jpg/800px-Great_Barrier_Reef_%28cropped%29.jpg', options: ['Австралия', 'Филиппины', 'Индонезия', 'Мальдивы'], correct: 0 },
+            
+            // Россия
+            { category: 'russia', name: 'Кремль', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Moscow_Kremlin_from_%27Moscow_City%27_%28cropped%29.jpg/800px-Moscow_Kremlin_from_%27Moscow_City%27_%28cropped%29.jpg', options: ['Москва', 'Санкт-Петербург', 'Казань', 'Новгород'], correct: 0 },
+            { category: 'russia', name: 'Эрмитаж', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Hermitage_%28cropped%29.jpg/800px-Hermitage_%28cropped%29.jpg', options: ['Санкт-Петербург', 'Москва', 'Казань', 'Владивосток'], correct: 0 },
+            { category: 'russia', name: 'Байкал', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Baikal_%28cropped%29.jpg/800px-Lake_Baikal_%28cropped%29.jpg', options: ['Россия', 'Монголия', 'Китай', 'Казахстан'], correct: 0 },
+            { category: 'russia', name: 'Собор Василия Блаженного', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Saint_Basil%27s_Cathedral_%28cropped%29.jpg/800px-Saint_Basil%27s_Cathedral_%28cropped%29.jpg', options: ['Москва', 'Санкт-Петербург', 'Казань', 'Нижний Новгород'], correct: 0 },
+            { category: 'russia', name: 'Петропавловская крепость', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Peter_and_Paul_Fortress_%28cropped%29.jpg/800px-Peter_and_Paul_Fortress_%28cropped%29.jpg', options: ['Санкт-Петербург', 'Москва', 'Архангельск', 'Владивосток'], correct: 0 },
+        ];
+
+        // --- КАТЕГОРИИ (расширенные) ---
+        const categories = [
+            { id: 'all', label: '🌍 Все', emoji: '🌍' },
+            { id: 'europe', label: '🇪🇺 Европа', emoji: '🏛️' },
+            { id: 'asia', label: '🇯🇵 Азия', emoji: '⛩️' },
+            { id: 'america', label: '🇺🇸 Америка', emoji: '🗽' },
+            { id: 'africa', label: '🌍 Африка', emoji: '🦁' },
+            { id: 'australia', label: '🇦🇺 Австралия', emoji: '🦘' },
+            { id: 'russia', label: '🇷🇺 Россия', emoji: '🏰' },
+        ];
+
+        // --- СИСТЕМА РЕКОРДОВ ---
+        const RECORDS_KEY = 'quiz_records';
+        const STATS_KEY = 'quiz_stats';
+        const DAILY_KEY = 'quiz_daily';
+
+        function getRecords() {
+            try {
+                const data = localStorage.getItem(RECORDS_KEY);
+                return data ? JSON.parse(data) : {};
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function saveRecord(categoryId, score) {
+            const records = getRecords();
+            let isNew = false;
+            if (!records[categoryId] || score > records[categoryId]) {
+                records[categoryId] = score;
+                localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+                isNew = true;
+            }
+            return isNew;
+        }
+
+        function getRecord(categoryId) {
+            const records = getRecords();
+            return records[categoryId] || 0;
+        }
+
+        function getAllRecords() {
+            const records = getRecords();
+            const result = [];
+            categories.forEach(cat => {
+                if (records[cat.id]) {
+                    result.push({
+                        id: cat.id,
+                        label: cat.label,
+                        emoji: cat.emoji,
+                        score: records[cat.id]
+                    });
+                }
+            });
+            return result.sort((a, b) => b.score - a.score);
+        }
+
+        // --- СТАТИСТИКА ---
+        function getStats() {
+            try {
+                const data = localStorage.getItem(STATS_KEY);
+                return data ? JSON.parse(data) : { totalGames: 0, totalCorrect: 0, totalQuestions: 0 };
+            } catch(e) {
+                return { totalGames: 0, totalCorrect: 0, totalQuestions: 0 };
+            }
+        }
+
+        function updateStats(score, total) {
+            const stats = getStats();
+            stats.totalGames += 1;
+            stats.totalCorrect += score;
+            stats.totalQuestions += total;
+            localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+        }
+
+        // --- ЕЖЕДНЕВНЫЙ БОНУС ---
+        function checkDailyBonus() {
+            const today = new Date().toDateString();
+            const data = localStorage.getItem(DAILY_KEY);
+            if (data === today) {
+                return false; // Уже получали сегодня
+            }
+            localStorage.setItem(DAILY_KEY, today);
+            return true; // Можно получить бонус
+        }
+
+        function getBonusQuestions() {
+            // Добавляем 2 бонусных вопроса из случайных категорий
+            const bonusCount = 2;
+            const bonusQuestions = [];
+            const shuffled = shuffleArray([...questionsDB]);
+            for (let i = 0; i < Math.min(bonusCount, shuffled.length); i++) {
+                bonusQuestions.push(shuffled[i]);
+            }
+            return bonusQuestions;
+        }
+
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function getQuestionsForCategory(categoryId) {
+            let questions = [];
+            if (categoryId === 'all') {
+                questions = [...questionsDB];
+            } else {
+                questions = questionsDB.filter(q => q.category === categoryId);
+            }
+            
+            // Добавляем бонусные вопросы, если сегодня первый вход
+            if (checkDailyBonus()) {
+                const bonus = getBonusQuestions();
+                questions = [...questions, ...bonus];
+                sound.bonus();
+                showDailyBonus();
+            }
+            
+            return questions;
+        }
+
+        function getCategoryLabel(id) {
+            const cat = categories.find(c => c.id === id);
+            return cat ? cat.label : '🌍 Все';
+        }
+
+        // --- ПОКАЗ БОНУСА ---
+        function showDailyBonus() {
+            const bonusEl = document.getElementById('daily-bonus');
+            bonusEl.classList.remove('hide');
+            bonusEl.style.animation = 'bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+            setTimeout(() => {
+                bonusEl.style.animation = '';
+            }, 2000);
+        }
+
+        // --- СОСТОЯНИЕ ИГРЫ ---
+        let state = {
+            currentCategory: 'all',
+            questions: [],
+            currentIndex: 0,
+            score: 0,
+            answered: false,
+            timer: null,
+            timeLeft: 10,
+            totalQuestions: 0,
+            isPlaying: false,
+            isNewRecord: false,
+            streak: 0, // Серия правильных ответов
+            hasDailyBonus: false,
+        };
+
+        // --- DOM ЭЛЕМЕНТЫ ---
+        const categoryScreen = document.getElementById('category-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const finishScreen = document.getElementById('finish-screen');
+        const categoryGrid = document.getElementById('category-grid');
+        const categoryBadge = document.getElementById('category-badge');
+        const progressText = document.getElementById('progress-text');
+        const scoreText = document.getElementById('score-text');
+        const questionImage = document.getElementById('question-image');
+        const imagePlaceholder = document.getElementById('image-placeholder');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const shareBtn = document.getElementById('share-btn');
+        const menuBtn = document.getElementById('menu-btn');
+        const timerProgress = document.getElementById('timer-progress');
+        const timerText = document.getElementById('timer-text');
+        const recordsBtn = document.getElementById('records-btn');
+        const recordsOverlay = document.getElementById('records-overlay');
+        const closeRecords = document.getElementById('close-records');
+        const recordsList = document.getElementById('records-list');
+        const streakIndicator = document.getElementById('streak-indicator');
+        const streakText = document.getElementById('streak-text');
+
+        // Финиш
+        const finishEmoji = document.getElementById('finish-emoji');
+        const finishTitle = document.getElementById('finish-title');
+        const finishSubtitle = document.getElementById('finish-subtitle');
+        const finalScore = document.getElementById('final-score');
+        const finalTotal = document.getElementById('final-total');
+        const finalPercent = document.getElementById('final-percent');
+        const newRecordBadge = document.getElementById('new-record-badge');
+
+        const CIRCUMFERENCE = 150.8;
+
+        // --- ФУНКЦИИ ЗВУКА ---
+        function playCorrectSound() {
+            sound.resume();
+            sound.correct();
+        }
+
+        function playWrongSound() {
+            sound.resume();
+            sound.wrong();
+        }
+
+        function playTickSound() {
+            sound.resume();
+            sound.tick();
+        }
+
+        function playStreakSound() {
+            sound.resume();
+            sound.streak();
+        }
+
+        function playGameOverSound(score, total) {
+            sound.resume();
+            sound.gameOver(score, total);
+        }
+
+        function playRecordSound() {
+            sound.resume();
+            sound.record();
+        }
+
+        // --- ОТОБРАЖЕНИЕ КАТЕГОРИЙ ---
+        function renderCategories() {
+            categoryGrid.innerHTML = '';
+            const hasBonus = checkDailyBonus();
+            
+            categories.forEach(cat => {
+                const count = getQuestionsForCategory(cat.id).length;
+                const record = getRecord(cat.id);
+                const hasRecord = record > 0;
+
+                const btn = document.createElement('button');
+                btn.className = 'category-btn slide-in';
+                if (hasRecord) btn.classList.add('has-record');
+                btn.style.animationDelay = `${Math.random() * 0.2}s`;
+                btn.innerHTML = `
+                    <span class="emoji">${cat.emoji}</span>
+                    ${cat.label}
+                    <span class="count">${count} вопросов</span>
+                    ${hasRecord ? `<span class="best-score">🏅 ${record}%</span>` : ''}
+                `;
+                btn.addEventListener('click', () => startGame(cat.id));
+                btn.addEventListener('click', () => sound.resume());
+                categoryGrid.appendChild(btn);
+            });
+
+            // Показываем бонус, если доступен
+            if (hasBonus) {
+                showDailyBonus();
+            }
+        }
+
+        // --- РЕКОРДЫ (попап) ---
+        function renderRecords() {
+            const records = getAllRecords();
+            const stats = getStats();
+            
+            let html = '';
+            
+            // Общая статистика
+            if (stats.totalGames > 0) {
+                html += `
+                    <div style="background: var(--tg-theme-bg-color, #f8f8f8); border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: center;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                            <div>
+                                <div style="font-size: 20px; font-weight: 700; color: var(--tg-theme-button-color, #0088cc);">${stats.totalGames}</div>
+                                <div style="font-size: 11px; color: var(--tg-theme-hint-color, #666);">Игр сыграно</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: 700; color: #4caf50;">${Math.round((stats.totalCorrect / stats.totalQuestions) * 100) || 0}%</div>
+                                <div style="font-size: 11px; color: var(--tg-theme-hint-color, #666);">Точность</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: 700; color: #ffd700;">${stats.totalCorrect}</div>
+                                <div style="font-size: 11px; color: var(--tg-theme-hint-color, #666);">Всего верно</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (records.length === 0) {
+                html += `
+                    <div class="no-records">
+                        😔 Пока нет рекордов<br>
+                        <span style="font-size: 12px;">Сыграй в игру, чтобы установить рекорд!</span>
+                    </div>
+                `;
+            } else {
+                html += records.map((r, idx) => `
+                    <div class="record-item" style="animation: slideDown 0.3s ease ${idx * 0.05}s both;">
+                        <span class="cat-name">${r.emoji} ${r.label}</span>
+                        <span class="cat-score">🏅 <strong>${r.score}%</strong></span>
+                    </div>
+                `).join('');
+            }
+
+            recordsList.innerHTML = html;
+        }
+
+        function showRecords() {
+            renderRecords();
+            recordsOverlay.classList.add('active');
+        }
+
+        function hideRecords() {
+            recordsOverlay.classList.remove('active');
+        }
+
+        // --- СТАРТ ИГРЫ ---
+        function startGame(categoryId) {
+            state.currentCategory = categoryId;
+            state.streak = 0;
+            streakIndicator.style.display = 'none';
+            
+            let allQuestions = getQuestionsForCategory(categoryId);
+            
+            // Проверяем бонус
+            if (checkDailyBonus()) {
+                state.hasDailyBonus = true;
+                const bonus = getBonusQuestions();
+                allQuestions = [...allQuestions, ...bonus];
+            } else {
+                state.hasDailyBonus = false;
+            }
+
+            if (allQuestions.length === 0) {
+                alert('В этой категории пока нет вопросов!');
+                return;
+            }
+
+            // Берем до 12 вопросов (10 + 2 бонусных), перемешиваем
+            state.questions = shuffleArray([...allQuestions]).slice(0, 12);
+            state.currentIndex = 0;
+            state.score = 0;
+            state.totalQuestions = state.questions.length;
+            state.isPlaying = true;
+            state.isNewRecord = false;
+
+            categoryScreen.classList.add('hide');
+            finishScreen.classList.add('hide');
+            gameScreen.classList.remove('hide');
+
+            categoryBadge.textContent = getCategoryLabel(categoryId);
+            renderQuestion();
+        }
+
+        // --- РЕНДЕР ВОПРОСА ---
+        function renderQuestion() {
+            const q = state.questions[state.currentIndex];
+            if (!q) {
+                endGame();
+                return;
+            }
+
+            state.answered = false;
+            state.timeLeft = 10;
+            nextBtn.disabled = true;
+            newRecordBadge.classList.add('hide');
+
+            // Обновляем прогресс
+            progressText.textContent = `${state.currentIndex + 1} / ${state.totalQuestions}`;
+            scoreText.textContent = `⭐ ${state.score}`;
+
+            // Показываем серию
+            if (state.streak >= 3) {
+                streakIndicator.style.display = 'flex';
+                streakText.textContent = `🔥 ${state.streak}`;
+            } else {
+                streakIndicator.style.display = 'none';
+            }
+
+            // Картинка
+            questionImage.style.display = 'block';
+            imagePlaceholder.style.display = 'none';
+            questionImage.src = q.image;
+            questionImage.onerror = () => {
+                imagePlaceholder.style.display = 'flex';
+                imagePlaceholder.textContent = '🖼️ Изображение недоступно';
+                questionImage.style.display = 'none';
+            };
+            questionImage.onload = () => {
+                imagePlaceholder.style.display = 'none';
+                questionImage.style.display = 'block';
+            };
+
+            // Анимация карточки
+            const container = document.querySelector('.container');
+            container.style.animation = 'none';
+            requestAnimationFrame(() => {
+                container.style.animation = 'slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+            });
+
+            // Варианты
+            const shuffledOptions = [...q.options];
+            const correctIndex = shuffledOptions.indexOf(q.options[q.correct]);
+
+            optionsContainer.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+            shuffledOptions.forEach((text, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn slide-in';
+                btn.style.animationDelay = `${idx * 0.08}s`;
+                btn.innerHTML = `<span class="letter">${letters[idx]}</span> ${text}`;
+                btn.dataset.index = idx;
+                btn.dataset.correct = (idx === correctIndex) ? 'true' : 'false';
+                btn.addEventListener('click', () => handleAnswer(btn, idx, correctIndex));
+                optionsContainer.appendChild(btn);
+            });
+
+            // Таймер
+            updateTimerDisplay();
+            startTimer();
+        }
+
+        // --- ТАЙМЕР ---
+        function startTimer() {
+            clearInterval(state.timer);
+            state.timeLeft = 10;
+            updateTimerDisplay();
+
+            state.timer = setInterval(() => {
+                state.timeLeft -= 0.1;
+                if (state.timeLeft <= 0) {
+                    state.timeLeft = 0;
+                    updateTimerDisplay();
+                    clearInterval(state.timer);
+                    if (!state.answered) {
+                        handleTimeout();
+                    }
+                    return;
+                }
+                updateTimerDisplay();
+                if (Math.round(state.timeLeft * 10) % 10 === 0 && state.timeLeft > 0) {
+                    playTickSound();
+                }
+            }, 100);
+        }
+
+        function updateTimerDisplay() {
+            const seconds = Math.ceil(state.timeLeft);
+            timerText.textContent = seconds;
+
+            const progress = state.timeLeft / 10;
+            const offset = CIRCUMFERENCE * (1 - progress);
+            timerProgress.style.strokeDashoffset = offset;
+
+            if (state.timeLeft <= 3) {
+                timerProgress.style.stroke = '#f44336';
+                timerText.classList.add('warning');
+            } else {
+                timerProgress.style.stroke = '#4caf50';
+                timerText.classList.remove('warning');
+            }
+
+            if (state.timeLeft <= 0) {
+                timerProgress.style.stroke = '#f44336';
+                timerText.textContent = '0';
+            }
+        }
+
+        function stopTimer() {
+            clearInterval(state.timer);
+        }
+
+        // --- ОБРАБОТКА ОТВЕТА ---
+        function handleAnswer(btn, selectedIdx, correctIdx) {
+            if (state.answered) return;
+            state.answered = true;
+            stopTimer();
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            const isCorrect = (selectedIdx === correctIdx);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                state.score += 1;
+                state.streak += 1;
+                scoreText.textContent = `⭐ ${state.score}`;
+                playCorrectSound();
+                if (navigator.vibrate) navigator.vibrate(30);
+                
+                // Звук серии
+                if (state.streak >= 3 && state.streak % 2 === 0) {
+                    playStreakSound();
+                }
+            } else {
+                btn.classList.add('wrong');
+                state.streak = 0;
+                playWrongSound();
+                if (navigator.vibrate) navigator.vibrate(100);
+                allBtns.forEach(b => {
+                    if (b.dataset.correct === 'true') {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            nextBtn.disabled = false;
+            timerText.textContent = isCorrect ? '✓' : '✗';
+            timerProgress.style.stroke = isCorrect ? '#4caf50' : '#f44336';
+        }
+
+        function handleTimeout() {
+            if (state.answered) return;
+            state.answered = true;
+            state.streak = 0;
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => {
+                b.disabled = true;
+                if (b.dataset.correct === 'true') {
+                    b.classList.add('correct');
+                }
+            });
+
+            playWrongSound();
+            nextBtn.disabled = false;
+            timerText.textContent = '⏰';
+        }
+
+        // --- СЛЕДУЮЩИЙ ВОПРОС ---
+        function nextQuestion() {
+            state.currentIndex++;
+            if (state.currentIndex < state.totalQuestions) {
+                renderQuestion();
+            } else {
+                endGame();
+            }
+        }
+
+        // --- ЗАВЕРШЕНИЕ ИГРЫ ---
+        function endGame() {
+            state.isPlaying = false;
+            stopTimer();
+
+            // Сохраняем статистику
+            updateStats(state.score, state.totalQuestions);
+
+            // Проверяем рекорд
+            const percent = Math.round((state.score / state.totalQuestions) * 100);
+            const isNewRecord = saveRecord(state.currentCategory, percent);
+
+            if (isNewRecord) {
+                state.isNewRecord = true;
+                playRecordSound();
+            }
+
+            gameScreen.classList.add('hide');
+            finishScreen.classList.remove('hide');
+            finishScreen.style.animation = 'slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+
+            // Эмодзи и текст
+            let emoji, title, subtitle;
+
+            if (percent === 100) {
+                emoji = '🌟';
+                title = 'Идеально!';
+                subtitle = 'Ты настоящий знаток!';
+            } else if (percent >= 80) {
+                emoji = '🏆';
+                title = 'Отлично!';
+                subtitle = 'Ты очень хорошо знаешь мир!';
+            } else if (percent >= 60) {
+                emoji = '👏';
+                title = 'Неплохо!';
+                subtitle = 'Продолжай изучать географию!';
+            } else if (percent >= 40) {
+                emoji = '📚';
+                title = 'Есть куда расти!';
+                subtitle = 'Попробуй ещё раз!';
+            } else {
+                emoji = '🤔';
+                title = 'Нужно больше практики!';
+                subtitle = 'Попробуй другую категорию!';
+            }
+
+            finishEmoji.textContent = emoji;
+            finishTitle.textContent = title;
+            finishSubtitle.textContent = subtitle;
+            finalScore.textContent = state.score;
+            finalTotal.textContent = state.totalQuestions;
+            finalPercent.textContent = `${percent}%`;
+
+            if (isNewRecord) {
+                newRecordBadge.classList.remove('hide');
+                newRecordBadge.textContent = `🎉 НОВЫЙ РЕКОРД! ${percent}%`;
+            } else {
+                newRecordBadge.classList.add('hide');
+            }
+
+            playGameOverSound(state.score, state.totalQuestions);
+
+            // Показываем кнопку "Поделиться" в Telegram
+            tg.MainButton.setText('📤 Поделиться результатом');
+            tg.MainButton.show();
+            tg.MainButton.onClick(() => {
+                tg.MainButton.hide();
+                shareResult(state.score, state.totalQuestions, percent);
+            });
+
+            // Отправляем данные в бота
+            try {
+                tg.sendData(JSON.stringify({
+                    score: state.score,
+                    total: state.totalQuestions,
+                    category: state.currentCategory,
+                    percent: percent,
+                    isNewRecord: isNewRecord,
+                    streak: state.streak,
+                    hasBonus: state.hasDailyBonus
+                }));
+            } catch(e) { /* игнорим */ }
+        }
+
+        // --- ПОДЕЛИТЬСЯ РЕЗУЛЬТАТОМ ---
+        function shareResult(score, total, percent) {
+            const botUsername = 'UgadayBot'; // Замени на своего бота
+            const message = `🎮 Я набрал ${score}/${total} (${percent}%) в игре "Угадай достопримечательность"!\n\n🔥 Проверь свои знания: https://t.me/${botUsername}`;
+            
+            try {
+                // Отправляем через Telegram
+                tg.sendData(JSON.stringify({
+                    action: 'share',
+                    text: message
+                }));
+                
+                // Альтернативный способ - открыть диалог
+                tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/${botUsername}&text=${encodeURIComponent(message)}`);
+            } catch(e) {
+                // Если не работает, копируем в буфер
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(message).then(() => {
+                        tg.showAlert('✅ Результат скопирован в буфер обмена!');
+                    });
+                }
+            }
+        }
+
+        // --- ВОЗВРАТ В МЕНЮ ---
+        function goToMenu() {
+            state.isPlaying = false;
+            stopTimer();
+            tg.MainButton.hide();
+            finishScreen.classList.add('hide');
+            gameScreen.classList.add('hide');
+            categoryScreen.classList.remove('hide');
+            categoryScreen.style.animation = 'slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards';
+            renderCategories();
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        renderCategories();
+
+        // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
+        nextBtn.addEventListener('click', nextQuestion);
+        restartBtn.addEventListener('click', () => {
+            tg.MainButton.hide();
+            const category = state.currentCategory || 'all';
+            startGame(category);
+        });
+        shareBtn.addEventListener('click', () => {
+            const percent = Math.round((state.score / state.totalQuestions) * 100);
+            shareResult(state.score, state.totalQuestions, percent);
+        });
+        menuBtn.addEventListener('click', goToMenu);
+        recordsBtn.addEventListener('click', showRecords);
+        closeRecords.addEventListener('click', hideRecords);
+        recordsOverlay.addEventListener('click', (e) => {
+            if (e.target === recordsOverlay) hideRecords();
+        });
+
+        // --- КОМАНДЫ БОТА (обработка через WebApp) ---
+        // Если бот отправляет команды через WebApp
+        tg.onEvent('mainButtonClicked', () => {
+            tg.MainButton.hide();
+        });
+
+        // Обработка входящих данных от бота
+        tg.onEvent('popupClosed', (data) => {
+            if (data && data.button_id === 'share') {
+                shareResult(state.score, state.totalQuestions, 
+                    Math.round((state.score / state.totalQuestions) * 100));
+            }
+        });
+
+        console.log('🎮 Угадай достопримечательность v4.0');
+        console.log(`📚 Загружено ${questionsDB.length} вопросов в ${categories.length} категориях`);
+        console.log('🏅 Рекорды сохраняются в localStorage');
+        console.log('🎁 Ежедневные бонусы активированы');
+        console.log('🔥 Система серий (streak) включена');
+
+        // Активируем звук при первом касании
+        document.addEventListener('click', () => sound.resume(), { once: true });
+        document.addEventListener('touchstart', () => sound.resume(), { once: true });
+
+        // Обработка ошибок изображений
+        window.addEventListener('error', (e) => {
+            if (e.target.tagName === 'IMG') {
+                console.warn('Ошибка загрузки изображения:', e.target.src);
+            }
+        }, true);
+
+        // Показываем бонус при загрузке
+        setTimeout(() => {
+            if (checkDailyBonus()) {
+                showDailyBonus();
+            }
+        }, 500);
+
+    })();
+</script>
+</body>
+</html>
