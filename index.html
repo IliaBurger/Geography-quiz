@@ -211,6 +211,7 @@
             height: 100%;
             object-fit: cover;
             display: block;
+            background-color: var(--tg-theme-bg-color, #f0f0f0);
         }
 
         .image-placeholder {
@@ -644,7 +645,7 @@
 
             <!-- Изображение -->
             <div class="image-wrapper">
-                <img id="question-image" src="" alt="Достопримечательность" style="display:none;">
+                <img id="question-image" src="" alt="Достопримечательность" referrerpolicy="no-referrer" style="display:none;">
                 <div class="image-placeholder" id="image-placeholder">🖼️ Загрузка...</div>
             </div>
 
@@ -700,9 +701,11 @@
         (function() {
             // --- ИНИЦИАЛИЗАЦИЯ TELEGRAM ---
             const tg = window.Telegram.WebApp;
-            tg.expand();
-            tg.setBackgroundColor('var(--tg-theme-bg-color)');
-            tg.setHeaderColor('var(--tg-theme-secondary-bg-color)');
+            if (tg) {
+                tg.expand();
+                tg.setBackgroundColor('var(--tg-theme-bg-color)');
+                tg.setHeaderColor('var(--tg-theme-secondary-bg-color)');
+            }
 
             // --- ЗВУКИ через Web Audio API ---
             class SoundFX {
@@ -1250,13 +1253,15 @@
                 playGameOverSound(state.score, state.totalQuestions);
 
                 try {
-                    tg.sendData(JSON.stringify({
-                        score: state.score,
-                        total: state.totalQuestions,
-                        category: state.currentCategory,
-                        percent: percent,
-                        isNewRecord: isNewRecord
-                    }));
+                    if (tg) {
+                        tg.sendData(JSON.stringify({
+                            score: state.score,
+                            total: state.totalQuestions,
+                            category: state.currentCategory,
+                            percent: percent,
+                            isNewRecord: isNewRecord
+                        }));
+                    }
                 } catch(e) { /* игнорим */ }
             }
 
@@ -1287,7 +1292,9 @@
                 if (e.target === recordsOverlay) hideRecords();
             });
 
-            tg.MainButton.hide();
+            if (tg) {
+                tg.MainButton.hide();
+            }
 
             console.log('🎮 Угадай достопримечательность v4.0');
             console.log(`📚 Загружено ${questionsDB.length} вопросов`);
