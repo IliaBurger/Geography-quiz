@@ -784,34 +784,40 @@
 
             // --- БАЗА ДАННЫХ ВОПРОСОВ ---
             const questionsDB = [
-                { category: 'europe', name: 'Рейхстаг', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Berlin_Reichstag_%28cropped%29.jpg/800px-Berlin_Reichstag_%28cropped%29.jpg', options: ['Берлин', 'Мюнхен', 'Гамбург', 'Кёльн'], correct: 0 },
-                { category: 'europe', name: 'Эйфелева башня', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/800px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg', options: ['Париж', 'Лион', 'Марсель', 'Ницца'], correct: 0 },
-                { category: 'europe', name: 'Колизей', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Colosseum_in_Rome%2C_Italy_-_April_2007_%28cropped%29.jpg/800px-Colosseum_in_Rome%2C_Italy_-_April_2007_%28cropped%29.jpg', options: ['Рим', 'Милан', 'Неаполь', 'Флоренция'], correct: 0 },
-                { category: 'europe', name: 'Биг Бен', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Big_Ben%2C_London_%28cropped%29.jpg/800px-Big_Ben%2C_London_%28cropped%29.jpg', options: ['Лондон', 'Париж', 'Рим', 'Мадрид'], correct: 0 },
-                { category: 'europe', name: 'Пизанская башня', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Leaning_Tower_of_Pisa_%28cropped%29.jpg/800px-Leaning_Tower_of_Pisa_%28cropped%29.jpg', options: ['Пиза', 'Флоренция', 'Венеция', 'Неаполь'], correct: 0 },
-                { category: 'europe', name: 'Стоунхендж', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Stonehenge_%28cropped%29.jpg/800px-Stonehenge_%28cropped%29.jpg', options: ['Англия', 'Шотландия', 'Уэльс', 'Ирландия'], correct: 0 },
-                
-                { category: 'asia', name: 'Тадж-Махал', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Taj_Mahal_%28Edited%29.jpg/800px-Taj_Mahal_%28Edited%29.jpg', options: ['Агра', 'Дели', 'Мумбаи', 'Джайпур'], correct: 0 },
-                { category: 'asia', name: 'Великая Китайская стена', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg/800px-The_Great_Wall_of_China_at_Jinshanling-edit.jpg', options: ['Пекин', 'Шанхай', 'Гонконг', 'Токио'], correct: 0 },
-                { category: 'asia', name: 'Бурдж-Халифа', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Burj_Khalifa_%28cropped%29.jpg/800px-Burj_Khalifa_%28cropped%29.jpg', options: ['Дубай', 'Абу-Даби', 'Доха', 'Эр-Рияд'], correct: 0 },
-                { category: 'asia', name: 'Ангкор-Ват', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Angkor_Wat_%28cropped%29.jpg/800px-Angkor_Wat_%28cropped%29.jpg', options: ['Камбоджа', 'Таиланд', 'Вьетнам', 'Лаос'], correct: 0 },
-                
-                { category: 'america', name: 'Статуя Свободы', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Statue_of_Liberty_7.jpg/800px-Statue_of_Liberty_7.jpg', options: ['Нью-Йорк', 'Вашингтон', 'Бостон', 'Чикаго'], correct: 0 },
-                { category: 'america', name: 'Мачу-Пикчу', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Machu_Picchu%2C_Peru_%28cropped%29.jpg/800px-Machu_Picchu%2C_Peru_%28cropped%29.jpg', options: ['Перу', 'Чили', 'Бразилия', 'Аргентина'], correct: 0 },
-                { category: 'america', name: 'Белый дом', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/White_House_%28cropped%29.jpg/800px-White_House_%28cropped%29.jpg', options: ['Вашингтон', 'Нью-Йорк', 'Бостон', 'Филадельфия'], correct: 0 },
-                
-                { category: 'africa', name: 'Пирамиды Гизы', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/800px-Kheops-Pyramid.jpg', options: ['Египет', 'Судан', 'Ливия', 'Тунис'], correct: 0 },
-                { category: 'africa', name: 'Сфинкс', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Great_Sphinx_of_Giza_%28cropped%29.jpg/800px-Great_Sphinx_of_Giza_%28cropped%29.jpg', options: ['Египет', 'Греция', 'Турция', 'Иордания'], correct: 0 },
-                { category: 'africa', name: 'Килиманджаро', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Kilimanjaro_%28cropped%29.jpg/800px-Kilimanjaro_%28cropped%29.jpg', options: ['Танзания', 'Кения', 'Уганда', 'Эфиопия'], correct: 0 },
-                
-                { category: 'australia', name: 'Оперный театр Сиднея', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sydney_Opera_House_%28cropped%29.jpg/800px-Sydney_Opera_House_%28cropped%29.jpg', options: ['Сидней', 'Мельбурн', 'Брисбен', 'Перт'], correct: 0 },
-                { category: 'australia', name: 'Айерс-Рок (Улуру)', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Uluru_%28cropped%29.jpg/800px-Uluru_%28cropped%29.jpg', options: ['Австралия', 'Новая Зеландия', 'Индонезия', 'Папуа'], correct: 0 },
-                
-                { category: 'russia', name: 'Кремль', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Moscow_Kremlin_from_%27Moscow_City%27_%28cropped%29.jpg/800px-Moscow_Kremlin_from_%27Moscow_City%27_%28cropped%29.jpg', options: ['Москва', 'Санкт-Петербург', 'Казань', 'Новгород'], correct: 0 },
-                { category: 'russia', name: 'Эрмитаж', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Hermitage_%28cropped%29.jpg/800px-Hermitage_%28cropped%29.jpg', options: ['Санкт-Петербург', 'Москва', 'Казань', 'Владивосток'], correct: 0 },
-                { category: 'russia', name: 'Байкал', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Baikal_%28cropped%29.jpg/800px-Lake_Baikal_%28cropped%29.jpg', options: ['Россия', 'Монголия', 'Китай', 'Казахстан'], correct: 0 },
-                { category: 'russia', name: 'Собор Василия Блаженного', image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Saint_Basil%27s_Cathedral_%28cropped%29.jpg/800px-Saint_Basil%27s_Cathedral_%28cropped%29.jpg', options: ['Москва', 'Санкт-Петербург', 'Казань', 'Нижний Новгород'], correct: 0 },
-            ];
+    // Европа
+    { category: 'europe', name: 'Рейхстаг', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Berlin_Reichstag_%28cropped%29.jpg/800px-Berlin_Reichstag_%28cropped%29.jpg', options: ['Берлин', 'Мюнхен', 'Гамбург', 'Кёльн'], correct: 0 },
+    { category: 'europe', name: 'Эйфелева башня', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/800px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg', options: ['Париж', 'Лион', 'Марсель', 'Ницца'], correct: 0 },
+    { category: 'europe', name: 'Колизей', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Colosseum_in_Rome%2C_Italy_-_April_2007_%28cropped%29.jpg/800px-Colosseum_in_Rome%2C_Italy_-_April_2007_%28cropped%29.jpg', options: ['Рим', 'Милан', 'Неаполь', 'Флоренция'], correct: 0 },
+    { category: 'europe', name: 'Биг Бен', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Big_Ben%2C_London_%28cropped%29.jpg/800px-Big_Ben%2C_London_%28cropped%29.jpg', options: ['Лондон', 'Париж', 'Рим', 'Мадрид'], correct: 0 },
+    { category: 'europe', name: 'Пизанская башня', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Leaning_Tower_of_Pisa_%28cropped%29.jpg/800px-Leaning_Tower_of_Pisa_%28cropped%29.jpg', options: ['Пиза', 'Флоренция', 'Венеция', 'Неаполь'], correct: 0 },
+    { category: 'europe', name: 'Стоунхендж', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Stonehenge_%28cropped%29.jpg/800px-Stonehenge_%28cropped%29.jpg', options: ['Англия', 'Шотландия', 'Уэльс', 'Ирландия'], correct: 0 },
+    
+    // Азия
+    { category: 'asia', name: 'Тадж-Махал', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Taj_Mahal_%28Edited%29.jpg/800px-Taj_Mahal_%28Edited%29.jpg', options: ['Агра', 'Дели', 'Мумбаи', 'Джайпур'], correct: 0 },
+    { category: 'asia', name: 'Великая Китайская стена', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg/800px-The_Great_Wall_of_China_at_Jinshanling-edit.jpg', options: ['Пекин', 'Шанхай', 'Гонконг', 'Токио'], correct: 0 },
+    { category: 'asia', name: 'Бурдж-Халифа', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Burj_Khalifa_%28cropped%29.jpg/800px-Burj_Khalifa_%28cropped%29.jpg', options: ['Дубай', 'Абу-Даби', 'Доха', 'Эр-Рияд'], correct: 0 },
+    { category: 'asia', name: 'Ангкор-Ват', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Angkor_Wat_%28cropped%29.jpg/800px-Angkor_Wat_%28cropped%29.jpg', options: ['Камбоджа', 'Таиланд', 'Вьетнам', 'Лаос'], correct: 0 },
+    
+    // Америка
+    { category: 'america', name: 'Статуя Свободы', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Statue_of_Liberty_7.jpg/800px-Statue_of_Liberty_7.jpg', options: ['Нью-Йорк', 'Вашингтон', 'Бостон', 'Чикаго'], correct: 0 },
+    { category: 'america', name: 'Мачу-Пикчу', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Machu_Picchu%2C_Peru_%28cropped%29.jpg/800px-Machu_Picchu%2C_Peru_%28cropped%29.jpg', options: ['Перу', 'Чили', 'Бразилия', 'Аргентина'], correct: 0 },
+    { category: 'america', name: 'Белый дом', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/White_House_%28cropped%29.jpg/800px-White_House_%28cropped%29.jpg', options: ['Вашингтон', 'Нью-Йорк', 'Бостон', 'Филадельфия'], correct: 0 },
+    
+    // Африка
+    { category: 'africa', name: 'Пирамиды Гизы', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Kheops-Pyramid.jpg/800px-Kheops-Pyramid.jpg', options: ['Египет', 'Судан', 'Ливия', 'Тунис'], correct: 0 },
+    { category: 'africa', name: 'Сфинкс', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Great_Sphinx_of_Giza_%28cropped%29.jpg/800px-Great_Sphinx_of_Giza_%28cropped%29.jpg', options: ['Египет', 'Греция', 'Турция', 'Иордания'], correct: 0 },
+    { category: 'africa', name: 'Килиманджаро', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Kilimanjaro_%28cropped%29.jpg/800px-Kilimanjaro_%28cropped%29.jpg', options: ['Танзания', 'Кения', 'Уганда', 'Эфиопия'], correct: 0 },
+    
+    // Австралия
+    { category: 'australia', name: 'Оперный театр Сиднея', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sydney_Opera_House_%28cropped%29.jpg/800px-Sydney_Opera_House_%28cropped%29.jpg', options: ['Сидней', 'Мельбурн', 'Брисбен', 'Перт'], correct: 0 },
+    { category: 'australia', name: 'Айерс-Рок (Улуру)', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Uluru_%28cropped%29.jpg/800px-Uluru_%28cropped%29.jpg', options: ['Австралия', 'Новая Зеландия', 'Индонезия', 'Папуа'], correct: 0 },
+    
+    // Россия
+    { category: 'russia', name: 'Кремль', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Moscow_Kremlin_from_%27Moscow_City%27_%28cropped%29.jpg/800px-Moscow_Kremlin_from_%27Moscow_City%27_%28cropped%29.jpg', options: ['Москва', 'Санкт-Петербург', 'Казань', 'Новгород'], correct: 0 },
+    { category: 'russia', name: 'Эрмитаж', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Hermitage_%28cropped%29.jpg/800px-Hermitage_%28cropped%29.jpg', options: ['Санкт-Петербург', 'Москва', 'Казань', 'Владивосток'], correct: 0 },
+    { category: 'russia', name: 'Байкал', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Lake_Baikal_%28cropped%29.jpg/800px-Lake_Baikal_%28cropped%29.jpg', options: ['Россия', 'Монголия', 'Китай', 'Казахстан'], correct: 0 },
+    { category: 'russia', name: 'Собор Василия Блаженного', image: 'https://images.weserv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Saint_Basil%27s_Cathedral_%28cropped%29.jpg/800px-Saint_Basil%27s_Cathedral_%28cropped%29.jpg', options: ['Москва', 'Санкт-Петербург', 'Казань', 'Нижний Новгород'], correct: 0 },
+];
 
             // --- КАТЕГОРИИ ---
             const categories = [
