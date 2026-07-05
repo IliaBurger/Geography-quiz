@@ -698,13 +698,22 @@
     </div>
 
     <script>
-        (function() {
+        // Ждём полной загрузки страницы
+        document.addEventListener('DOMContentLoaded', function() {
             // --- ИНИЦИАЛИЗАЦИЯ TELEGRAM ---
-            const tg = window.Telegram.WebApp;
-            if (tg) {
-                tg.expand();
-                tg.setBackgroundColor('var(--tg-theme-bg-color)');
-                tg.setHeaderColor('var(--tg-theme-secondary-bg-color)');
+            let tg = null;
+            try {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    tg = window.Telegram.WebApp;
+                    tg.expand();
+                    tg.setBackgroundColor('var(--tg-theme-bg-color)');
+                    tg.setHeaderColor('var(--tg-theme-secondary-bg-color)');
+                    console.log('✅ Telegram WebApp инициализирован');
+                } else {
+                    console.log('⚠️ Telegram WebApp не найден, работаем в обычном браузере');
+                }
+            } catch(e) {
+                console.warn('⚠️ Ошибка инициализации Telegram:', e);
             }
 
             // --- ЗВУКИ через Web Audio API ---
@@ -953,6 +962,7 @@
 
             // --- ОТОБРАЖЕНИЕ КАТЕГОРИЙ ---
             function renderCategories() {
+                console.log('🔄 Рендеринг категорий...');
                 categoryGrid.innerHTML = '';
                 categories.forEach(cat => {
                     const count = getQuestionsForCategory(cat.id).length;
@@ -973,6 +983,7 @@
                     btn.addEventListener('click', () => sound.resume());
                     categoryGrid.appendChild(btn);
                 });
+                console.log('✅ Категории отрендерены, кнопок:', categoryGrid.children.length);
             }
 
             // --- РЕКОРДЫ (попап) ---
@@ -1277,6 +1288,7 @@
             }
 
             // --- ИНИЦИАЛИЗАЦИЯ ---
+            console.log('🚀 Запуск игры...');
             renderCategories();
 
             // --- ОБРАБОТЧИКИ СОБЫТИЙ ---
@@ -1308,7 +1320,7 @@
                 }
             }, true);
 
-        })();
+        }); // Конец DOMContentLoaded
     </script>
 </body>
 </html>
